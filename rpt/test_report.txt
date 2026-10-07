@@ -1,0 +1,93 @@
+Washing machine controller - automated test suite
+Config: tick=10 ms, wash=180000 ticks (30 min), blink=500 ms, stop window=2000 ms
+
+== A. Power-on & LEDs ==
+  [TC01 ] Power-on: STANDBY, credit 0, RLED on, BLED off                   PASS
+  [TC02 ] RLED steady (not blinking) during standby                        PASS
+
+== B. Coins & credit ==
+  [TC03 ] Insert 10c -> credit 10, stay STANDBY                            PASS
+  [TC04 ] Insert 20c -> credit 20, stay STANDBY                            PASS
+  [TC05 ] Insert 50c -> READY, BLED on, RLED off                           PASS
+  [TC06 ] 10+20+20 = 50c reaches READY exactly                             PASS
+  [TC07 ] 40c is not enough: RUN ignored                                   PASS
+  [TC08 ] 20+20+20 = 60c -> READY                                          PASS
+  [TC09 ] Extra coins accumulate while READY                               PASS
+  [TC10 ] Invalid coin -> ERROR, RLED blinking, credit kept                PASS
+  [TC11 ] Invalid-coin error auto-clears after 3 s -> STANDBY              PASS
+  [TC12 ] Invalid-coin error in READY recovers to READY                    PASS
+  [TC13 ] Valid coin during error is accepted, ends error                  PASS
+  [TC14 ] Repeated invalid coin restarts the 3 s error                     PASS
+  [TC15 ] RLED blink timing 500 ms ON / 500 ms OFF                         PASS
+  [TC16 ] Buttons ignored during error display                             PASS
+  [TC17 ] Credit limited to 990c, extra coin rejected                      PASS
+
+== C. RUN / start of washing ==
+  [TC18 ] RUN with 0c ignored                                              PASS
+  [TC19 ] RUN in READY: wash 30 min, money cleared (no change)             PASS
+  [TC20 ] BLED blinks 1 Hz while running, RLED off                         PASS
+  [TC21 ] PAUSE/STOP ignored in STANDBY/READY                              PASS
+  [TC22 ] RUN while running does not restart timer                         PASS
+  [TC23 ] Coins rejected while RUNNING/PAUSED                              PASS
+
+== D. PAUSE / resume ==
+  [TC24 ] PAUSE: motor off, BLED steady on                                 PASS
+  [TC25 ] Timer keeps counting down while paused                           PASS
+  [TC26 ] RUN in PAUSED resumes, timer not reset                           PASS
+  [TC27 ] PAUSE while paused ignored                                       PASS
+  [TC28 ] Many pause/resume cycles: total still 30 min                     PASS
+
+== E. Washing timer ==
+  [TC29 ] Wash ends automatically at exactly 30:00                         PASS
+  [TC30 ] Timer may expire while paused -> STANDBY                         PASS
+  [TC31 ] Machine serves a new customer after finishing                    PASS
+
+== F. STOP twice (force stop) ==
+  [TC32 ] Single STOP does not stop the machine                            PASS
+  [TC33 ] STOP x2 while RUNNING -> force stop                              PASS
+  [TC34 ] STOP x2 while PAUSED -> force stop                               PASS
+  [TC35 ] 2nd STOP after 2 s window counts as 1st                          PASS
+  [TC36 ] 2nd STOP at last tick of window still stops                      PASS
+  [TC37 ] RUN/PAUSE between STOPs breaks the sequence                      PASS
+  [TC38 ] Timer completes while STOP armed -> COMPLETED                    PASS
+
+== G. Hardware fault ==
+  [TC39 ] Fault -> ERROR, RLED blink, coins rejected, no auto clear        PASS
+  [TC40 ] Fault clear returns to STANDBY/READY, credit kept                PASS
+  [TC41 ] Fault while running: motor off, timer frozen, -> PAUSED          PASS
+  [TC42 ] Hardware fault overrides invalid-coin error                      PASS
+  [TC43 ] Duplicate fault / spurious clear / STOP disarm                   PASS
+
+== H. Exhaustive transition table (6 states x 9 events = 54 pairs) ==
+  [TC44 ] Table row STANDBY (9 events)                                     PASS
+  [TC45 ] Table row READY (9 events)                                       PASS
+  [TC46 ] Table row RUNNING (9 events)                                     PASS
+  [TC47 ] Table row PAUSED (9 events)                                      PASS
+  [TC48 ] Table row ERROR / invalid coin (9 events)                        PASS
+  [TC49 ] Table row ERROR / hardware fault (9 events)                      PASS
+
+== I. Robustness ==
+  [TC50 ] NULL pointers, bad events, corrupted state                       PASS
+  [TC51 ] Name helpers for logging                                         PASS
+  [TC52 ] 200k random steps: all safety invariants hold                    PASS
+
+== J. Debouncer ==
+  [TC53 ] Press detected after N stable samples                            PASS
+  [TC54 ] Glitches shorter than N samples rejected                         PASS
+  [TC55 ] Long hold -> exactly 1 press and 1 release                       PASS
+
+== K. Full stack (mock HAL + debouncer + FSM) ==
+  [TC56 ] App init drives pins, rejects incomplete HAL                     PASS
+  [TC57 ] Coin acceptor value -> event mapping                             PASS
+  [TC58 ] Coins -> RUN -> blinking -> 30 min -> STANDBY                    PASS
+  [TC59 ] Bouncing RUN button gives a single event                         PASS
+  [TC60 ] 10 ms spike on button ignored                                    PASS
+  [TC61 ] Physical STOP pressed twice stops washing                        PASS
+  [TC62 ] Physical PAUSE / RUN buttons                                     PASS
+  [TC63 ] 25c coin -> RLED pin blinks then recovers                        PASS
+  [TC64 ] Fault line debounced, real fault handled                         PASS
+
+------------------------------------------------------------------------------
+ TOTAL: 64   PASSED: 64   FAILED: 0   (assertions checked: 1378774)
+------------------------------------------------------------------------------
+>>> ALL TESTS PASSED <<<

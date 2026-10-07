@@ -1,0 +1,12 @@
+# Binaries & build directory
+build/
+*.exe
+*.o
+*.obj
+*.bin
+
+# Temporary & debug files
+*.tmp
+*.log
+.vscode/
+.idea/
